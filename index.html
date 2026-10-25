@@ -590,7 +590,7 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
 
   /* ---------- Modo local: servido pelo script em 127.0.0.1:8765 ---------- */
   function lerLocal() {
-    fetch("https://raw.githubusercontent.com/damianzisman-cmd/projecao-2t-2026/main/projecao-2t.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+    fetch("https://raw.githubusercontent.com/damianzisman-cmd/projecao-2t-2026/dados/projecao-2t.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
       if (!r.ok) throw new Error("http " + r.status);
       return r.json();
     }).then(function (s) {
