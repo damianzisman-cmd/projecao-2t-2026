@@ -781,6 +781,7 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
     if (mScript !== null && mScript >= limiteScript) avisos.push("O resumo do script não é atualizado há " + mScript + " min" + (PUBLICO ? " (a página pública tem até 5 min de atraso)" : ""));
     var mTse = minutosTse(s.fonte && s.fonte.tseGeradoEm);
     if (mTse !== null && mTse >= 10) avisos.push("O TSE não publica novo arquivo nacional há " + mTse + " min");
+    (s.avisos || []).forEach(function (a) { if (/^Aviso:/.test(a)) avisos.push(a.replace(/^Aviso:\s*/, "")); });
     bar.textContent = avisos.join(" · ");
     bar.hidden = avisos.length === 0;
   }
