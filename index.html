@@ -230,6 +230,23 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
   .race { padding: 12px 14px 14px; }
   .tog { margin-left: 0; }
 }
+
+/* Faixa de definição da eleição (bloco "definicao" do JSON; a regra é do motor) */
+.defbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 14px 0 0; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--soft); color: var(--ink); }
+.defbar[hidden] { display: none; }
+.defbar .def-tit { font-weight: 700; letter-spacing: .02em; text-transform: uppercase; font-size: 13px; }
+.defbar .def-sub { font-size: 13px; color: var(--muted); }
+.defbar .def-chk { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; margin-left: auto; }
+.defbar .def-chk span { white-space: nowrap; opacity: .55; }
+.defbar .def-chk span.ok { opacity: 1; font-weight: 600; }
+.defbar[data-n="tendencia"] { background: #FFF4D6; border-color: #E2B93B; color: #5C4300; }
+.defbar[data-n="tendencia"] .def-sub { color: #7A5B00; }
+.defbar[data-n="definida"] { background: #E3F5E8; border-color: #5FBF7A; color: #0F4D24; }
+.defbar[data-n="definida"] .def-sub { color: #1F6B38; }
+.defbar[data-n="matematica"] { background: #0E5A2A; border-color: #0E5A2A; color: #FFFFFF; }
+.defbar[data-n="matematica"] .def-sub { color: #CFEBD8; }
+.defbar[data-n="matematica"] .def-chk span { opacity: .8; }
+@media (max-width: 640px) { .defbar .def-chk { margin-left: 0; width: 100%; } }
 </style>
 
 <span id="sonda" aria-hidden="true"></span>
@@ -248,6 +265,11 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
 
 <main class="wrap gut">
   <div id="conn" class="nbar" role="status" hidden></div>
+  <div id="defBar" class="defbar" data-n="aberta" role="status" hidden>
+    <span id="defTit" class="def-tit">Em aberto</span>
+    <span id="defSub" class="def-sub"></span>
+    <span id="defChk" class="def-chk" aria-label="condições"></span>
+  </div>
   <div id="demoBanner" class="nbar alt" hidden>
     <span><strong>Demonstração com dados fictícios.</strong> Os números e os nomes abaixo não são da eleição.</span>
     <button id="demoOff" class="btn" type="button">Voltar aos dados reais</button>
@@ -734,6 +756,38 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
   }
 
   /* ---------- Renderização ---------- */
+  var TITULO_BASE = document.title;
+  function renderDefinicao(s, demo, nomeA, nomeB) {
+    var bar = $("defBar");
+    var d = s && s.definicao;
+    if (demo) { d = { nivel: "aberta", lider: null, chance: null, desde: null, condicoes: {}, texto: "Em aberto (demonstração)" }; }
+    if (!d || !s || (s.status === "aguardando" && !demo)) { bar.hidden = true; document.title = TITULO_BASE; return; }
+    var nivel = d.nivel || "aberta";
+    var lider = d.lider === "A" ? nomeA : (d.lider === "B" ? nomeB : null);
+    var tit = { aberta: "Em aberto", tendencia: "Tendência", definida: "Definida pelo modelo", matematica: "Matematicamente definida" }[nivel] || nivel;
+    if (lider && nivel !== "aberta") tit += ": " + lider;
+    bar.dataset.n = nivel;
+    setText("defTit", tit);
+    var sub = [];
+    if (nivel !== "aberta" && isNum(d.chance)) sub.push("chance " + chance(d.chance));
+    if (nivel === "tendencia") sub.push("não é definição");
+    if (nivel === "matematica") sub.push("os votos que faltam não revertem");
+    if (nivel === "definida") sub.push("quatro condições atendidas há pelo menos 1 minuto");
+    if (d.desde && nivel !== "aberta") sub.push("desde " + hora(d.desde));
+    setText("defSub", sub.join(" · "));
+    var c = d.condicoes || {};
+    var itens = [["chance99", "chance ≥ 99%"], ["pisoAcima50", "piso do intervalo > 50%"], ["cobertura", "≥ 25% das seções e grandes estados"], ["estavel", "estável há 10 min"], ["matematica", "irreversível"]];
+    var chk = $("defChk"); chk.innerHTML = "";
+    itens.forEach(function (it) {
+      var sp = document.createElement("span");
+      sp.className = c[it[0]] ? "ok" : "";
+      sp.textContent = (c[it[0]] ? "✓ " : "○ ") + it[1];
+      chk.appendChild(sp);
+    });
+    bar.hidden = false;
+    var pref = { aberta: "", tendencia: "Tendência · ", definida: "✓ Definida · ", matematica: "✓ Definida · " }[nivel] || "";
+    document.title = pref + TITULO_BASE;
+  }
   function render() {
     var s = demo ? demoSnap() : snap;
     var teste = !demo && s && s.fonte && s.fonte.ambiente && s.fonte.ambiente !== "oficial";
@@ -758,6 +812,7 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
       if (ultA !== ultB) { curtoA = ultA; curtoB = ultB; } else { curtoA = nomeA; curtoB = nomeB; }
     }
     setText("legA", "vantagem de " + curtoA); setText("legB", "vantagem de " + curtoB);
+    try { renderDefinicao(s, demo, nomeA, nomeB); } catch (e) { console.warn("faixa de definição", e); }
 
     // Frescor
     var fr = [];
