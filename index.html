@@ -95,6 +95,8 @@ button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px 
 .cand-meta { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
 .cand-nome { font-family: var(--f-display); font-stretch: 80%; font-weight: 800; font-size: clamp(19px, 3.4vw, 28px); line-height: 1.05; text-transform: uppercase; letter-spacing: .01em; text-wrap: balance; display: flex; align-items: center; gap: 10px; }
 .cand[data-k="B"] .cand-nome { flex-direction: row-reverse; }
+.cand-rot { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 10px; }
+.cand-rot.proj { color: var(--ink); font-weight: 600; }
 .cand-pct { font-family: var(--f-display); font-stretch: 75%; font-weight: 800; font-size: clamp(50px, 11.5vw, 100px); line-height: .92; font-variant-numeric: tabular-nums; letter-spacing: -.015em; margin-top: 8px; }
 .cand-pct.vazio { color: var(--line); }
 .pct-sign { font-size: .42em; margin-left: 3px; vertical-align: .62em; color: var(--muted); }
@@ -283,6 +285,7 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
     <article class="card cand" data-k="A" style="--c-fill: var(--cA-fill); --c-edge: var(--cA-edge)">
       <p class="cand-meta" id="metaA">—</p>
       <h2 class="cand-nome"><span class="badge" aria-hidden="true"></span><span id="nomeA">Candidato A</span></h2>
+      <p class="cand-rot" id="rotA">Projeção do resultado final</p>
       <p class="cand-pct"><span id="pctA">—</span><span class="pct-sign">%</span></p>
       <p class="cand-int" id="intA">intervalo de 90%: —</p>
       <div class="ch"><span class="ch-l">Chance de vitória</span><span class="ch-bar"><span id="chBarA"></span></span><strong id="chA">—</strong></div>
@@ -290,15 +293,16 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
     <article class="card cand" data-k="B" style="--c-fill: var(--cB-fill); --c-edge: var(--cB-edge)">
       <p class="cand-meta" id="metaB">—</p>
       <h2 class="cand-nome"><span class="badge" aria-hidden="true"></span><span id="nomeB">Candidato B</span></h2>
+      <p class="cand-rot" id="rotB">Projeção do resultado final</p>
       <p class="cand-pct"><span id="pctB">—</span><span class="pct-sign">%</span></p>
       <p class="cand-int" id="intB">intervalo de 90%: —</p>
       <div class="ch"><span class="ch-l">Chance de vitória</span><span class="ch-bar"><span id="chBarB"></span></span><strong id="chB">—</strong></div>
     </article>
     <div class="card race">
-      <div class="race-h"><span class="lbl">Projeção do resultado final · Brasil</span><span class="sub">votos válidos · a linha central marca 50%</span></div>
+      <div hidden><div class="race-h"><span class="lbl">Projeção do resultado final · Brasil</span><span class="sub">votos válidos · a linha central marca 50%</span></div>
       <div class="rbar vazio" id="projBar" aria-hidden="true"><span class="rA" id="pbA"></span><span class="rB"></span><span class="rband" id="pbBand" hidden></span><span class="r50"></span></div>
-      <div class="rlab"><span id="pbLabA">—</span><span class="mid">50%</span><span id="pbLabB">—</span></div>
-      <div class="race-h"><span class="lbl">Contagem oficial do TSE</span><span class="sub" id="ctSub">—</span></div>
+      <div class="rlab"><span id="pbLabA">—</span><span class="mid">50%</span><span id="pbLabB">—</span></div></div>
+      <div class="race-h"><span class="lbl">Contagem oficial do TSE · votos válidos</span><span class="sub" id="ctSub">—</span></div>
       <div class="rbar thin vazio" id="ctBar" aria-hidden="true"><span class="rA" id="ctA"></span><span class="rB"></span><span class="r50"></span></div>
       <div class="rlab"><span id="ctLabA">—</span><span class="mid">50%</span><span id="ctLabB">—</span></div>
       <p class="race-note" id="placarNote">A divulgação oficial do TSE começa às 17h (Brasília). Este painel lê o resumo do script a cada 30 segundos.</p>
@@ -853,6 +857,9 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
     var temProj = pr && pr.pctA && isNum(pr.pctA.mediana);
     var ativo = s && (s.status === "apurando" || s.status === "final");
     var mostrar = temProj && (ativo || demo);
+    var rot = !mostrar ? "Projeção do resultado final" : (pr.modelo === "inicial" ? "Estimativa inicial · antes dos votos do 2º turno" : "Projeção do resultado final · votos válidos");
+    setText("rotA", rot); setText("rotB", rot);
+    ["rotA", "rotB"].forEach(function (id) { var el = $(id); if (el) el.classList.toggle("proj", !!mostrar && pr.modelo !== "inicial"); });
     setText("pctA", mostrar ? p1(pr.pctA.mediana) : "—");
     setText("pctB", mostrar ? p1(pr.pctB && pr.pctB.mediana) : "—");
     Array.prototype.forEach.call(document.querySelectorAll(".pct-sign"), function (el) { el.hidden = !mostrar; });
