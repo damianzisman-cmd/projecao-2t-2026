@@ -265,6 +265,7 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
 
 <main class="wrap gut">
   <div id="conn" class="nbar" role="status" hidden></div>
+  <div id="staleBar" class="nbar" role="status" hidden></div>
   <div id="defBar" class="defbar" data-n="aberta" role="status" hidden>
     <span id="defTit" class="def-tit">Em aberto</span>
     <span id="defSub" class="def-sub"></span>
@@ -757,6 +758,28 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
 
   /* ---------- Renderização ---------- */
   var TITULO_BASE = document.title;
+  var PUBLICO = /github\.io$/.test(location.hostname);
+  function minutos(iso) { var t = Date.parse(iso); return isNaN(t) ? null : Math.round((Date.now() - t) / 60000); }
+  function minutosTse(txt) {
+    // "25/10/2026 20:30:58" (horário de Brasília)
+    var m = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/.exec(txt || "");
+    if (!m) return null;
+    var t = Date.parse(m[3] + "-" + m[2] + "-" + m[1] + "T" + m[4] + ":" + m[5] + ":" + m[6] + "-03:00");
+    return isNaN(t) ? null : Math.round((Date.now() - t) / 60000);
+  }
+  function renderParado(s, demo) {
+    var bar = $("staleBar");
+    if (PUBLICO) { var f = $("fresh"); if (f && f.textContent.indexOf("5 min") < 0) f.textContent += " · página pública: até 5 min de atraso"; }
+    if (demo || !s || s.status !== "apurando") { bar.hidden = true; return; }
+    var avisos = [];
+    var mScript = minutos(s.geradoEm);
+    var limiteScript = PUBLICO ? 8 : 3;
+    if (mScript !== null && mScript >= limiteScript) avisos.push("O resumo do script não é atualizado há " + mScript + " min" + (PUBLICO ? " (a página pública tem até 5 min de atraso)" : ""));
+    var mTse = minutosTse(s.fonte && s.fonte.tseGeradoEm);
+    if (mTse !== null && mTse >= 10) avisos.push("O TSE não publica novo arquivo nacional há " + mTse + " min");
+    bar.textContent = avisos.join(" · ");
+    bar.hidden = avisos.length === 0;
+  }
   function renderDefinicao(s, demo, nomeA, nomeB) {
     var bar = $("defBar");
     var d = s && s.definicao;
@@ -813,6 +836,7 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
     }
     setText("legA", "vantagem de " + curtoA); setText("legB", "vantagem de " + curtoB);
     try { renderDefinicao(s, demo, nomeA, nomeB); } catch (e) { console.warn("faixa de definição", e); }
+    try { renderParado(s, demo); } catch (e) { console.warn("aviso de dados parados", e); }
 
     // Frescor
     var fr = [];
