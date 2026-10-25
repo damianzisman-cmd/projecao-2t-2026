@@ -769,7 +769,7 @@ footer { font-size: 12px; color: var(--muted); max-width: 90ch; }
   }
   function renderParado(s, demo) {
     var bar = $("staleBar");
-    if (PUBLICO) { var f = $("fresh"); if (f && f.textContent.indexOf("5 min") < 0) f.textContent += " · página pública: até 5 min de atraso"; }
+    if (PUBLICO) { setTimeout(function () { var f = $("fresh"); if (f && f.textContent.indexOf("5 min") < 0) f.textContent += " · página pública: até 5 min de atraso"; }, 0); }
     if (demo || !s || s.status !== "apurando") { bar.hidden = true; return; }
     var avisos = [];
     var mScript = minutos(s.geradoEm);
